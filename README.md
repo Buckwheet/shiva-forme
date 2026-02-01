@@ -9,6 +9,8 @@ Shiva manages the entire hunting lifecycle:
 - **Support**: Native spell maintenance, healing, and loot management.
 - **Stockpiling**: Efficiently moves gems/skins to locker bots.
 
+> **New to Shiva's Brain?** Check out [SHIVA_CONCEPTS.md](SHIVA_CONCEPTS.md) for a "Dummies Guide" to the Sense-Think-Act loop and how to tweak priorities.
+
 ## Installation
 
 ### 1. Clone the Repository
