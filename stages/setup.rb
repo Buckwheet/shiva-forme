@@ -53,6 +53,7 @@ module Shiva
       end
       fail "entry not defined for #{self.env.name}" unless self.env.entry
       Script.run("shiva_setup") if Script.exists?("shiva_setup")
+      Shiva::Spellup.top_off
       self.travel_to_hunting_area
       self.activate_group
       fail "did not travel to #{Room[self.env.entry].title.first}" unless Room.current.id.eql?(self.env.entry)

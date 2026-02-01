@@ -2,7 +2,7 @@ module Shiva
   Environment.define :scatter_north do
     @entry      = 12240
     @town       = %[Icemule Trace]
-    @scripts    = %w(reaction)
+    @scripts    = %w(autoreact)
     @foes       = %w(siphon master destroyer cerebralite doll)
     @wandering_foes = %w(crawler)
     @boundaries = %w(12151 12254 12256 12249 12247 12241)

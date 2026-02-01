@@ -8,7 +8,7 @@ module Shiva
     # 32443 (portcullis into moonsedge castle)
     @boundaries = %w(32322 32469 32442)
     @town       = %[Icemule Trace]
-    @scripts    = %w(reaction)
+    @scripts    = %w(autoreact)
     @foes       = %w(vampire fiend conjurer ghast dreadsteed grotesque banshee knight)
     @level      = (100..100)
 

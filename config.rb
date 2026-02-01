@@ -30,6 +30,7 @@ module Shiva
       Combat = {
         weapons: {},
         flee: ['monstrosity'],
+        armor: nil, 
       }
 
       Experience = {
@@ -102,7 +103,16 @@ module Shiva
     end
 
     def self.load!
+      Log.out("DEBUG: Loading config file: #{self.file}", label: :debug)
+      if File.exist?(self.file)
+         content = File.read(self.file)
+         Log.out("DEBUG: Content start: #{content[0..50].inspect}", label: :debug)
+      end
       @config = TomlRB.load_file(self.file, symbolize_keys: true)
+    rescue => e
+      Log.out("CRITICAL ERROR loading config: #{e.message}", label: :error)
+      Log.out("Bad file path: #{self.file}", label: :error)
+      raise e
     end
 
     def self.set(path, value)
@@ -196,6 +206,10 @@ module Shiva
 
     def self.flee_count
       self.get("combat.flee_count") || nil
+    end
+
+    def self.armor
+      self.get("combat.armor")
     end
 
     def self.chain_spear

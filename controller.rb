@@ -53,9 +53,11 @@ module Shiva
     end
 
     def main!
+      Log.out("DEBUG: Controller entering main!", label: :debug)
       Shiva::State.set(:hunting)
       @stage = :main
       @env.main()
+      Log.out("DEBUG: Controller finished main!", label: :debug)
     end
 
     def teardown!

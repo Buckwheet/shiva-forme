@@ -7,7 +7,11 @@ module Shiva
     end
 
     def statue
-      Containers.lootsack.where(name: "small statue").first or Containers.harness.where(name: "small statue").first
+      begin
+        Containers.lootsack.where(name: "small statue").first or Containers.harness.where(name: "small statue").first
+      rescue
+        nil # Return nil if container configuration is invalid
+      end
     end
 
     def available?(foe)

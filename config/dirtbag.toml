@@ -1,0 +1,75 @@
+[bounty]
+allowed = ["skin", "herb", "bandits", "rescue", "creature_problem", "escort"]
+boost = []
+escort = []
+
+[combat]
+armor = "dull black vultite hauberk"
+flee = ["monstrosity"]
+flee_count = 5
+
+[combat.weapons]
+# Empty defaults
+main = ""
+offhand = ""
+shield = ""
+
+[environs]
+drop = []
+
+[exp]
+instant = 100
+normal = 5
+
+[general]
+scripts = []
+town = "Icemule Trace"
+bases = [32469]
+
+[loot]
+boost = true
+
+[stockpile]
+bots = ["Makerol"]
+gems = [
+  "aster opal",
+  "blue sapphire",
+  "blue star-shaped riftshard",
+  "brass fang",
+  "brilliant wyrm's-tooth amethyst",
+  "copper fang",
+  "deep blue sapphire talon",
+  "Eye-of-Koar emerald",
+  "faceted black diamond",
+  "faceted midnight blue riftstone",
+  "fiery ruby talon",
+  "glistening onyx talon",
+  "glossy black doomstone",
+  "gold fang",
+  "golden firemote orb",
+  "grey pearl",
+  "iron fang",
+  "mithril fang",
+  "multi-colored wyrdshard",
+  "murky shadowglass orb",
+  "oblivion quartz",
+  "pale violet riftstone",
+  "pink topaz",
+  "platinum fang",
+  "sanguine wyrm's-eye garnet",
+  "shard of oblivion quartz",
+  "silver fang",
+  "small crystal-spoked wheel",
+  "sparkling emerald talon",
+  "steel fang",
+  "swirling aetherstone",
+  "swirling purple thunderstone",
+  "uncut diamond",
+  "uncut emerald",
+  "urglaes fang"
+]
+skins = []
+
+[support]
+healers = []
+pickers = []

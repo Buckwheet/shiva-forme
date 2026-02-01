@@ -12,12 +12,14 @@ module Shiva
         begin
           raise Exception.new("debug")
         rescue Exception => e
-          Log.out("#{Bounty::Util.short_bounty}", label: %i(bounty current))
+          msg = (defined?(Bounty::Util) && Bounty::Util.respond_to?(:short_bounty)) ? Bounty::Util.short_bounty : Bounty.task.to_s
+          Log.out("#{msg}", label: %i(bounty current))
           respond(e.backtrace.join("\n"))
         end
         
       else
-        Log.out(Bounty::Util.short_bounty, label: %i(bounty current))
+        msg = (defined?(Bounty::Util) && Bounty::Util.respond_to?(:short_bounty)) ? Bounty::Util.short_bounty : Bounty.task.to_s
+        Log.out(msg, label: %i(bounty current))
       end
     end
 

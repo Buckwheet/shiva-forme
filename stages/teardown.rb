@@ -25,7 +25,9 @@ module Shiva
       Char.unarm
       Log.out("running box routine...")
       return Boxes.drop if Boxes.picker?
+      Shiva.stockpile_gems!
       Task.room(town, "advguild").id.go2 unless town.nil?
+      Script.run("eloot", "sell") if Script.exists?("eloot")
       Script.run("shiva_teardown") if Script.exists?("shiva_teardown")
       Base.go2
     end

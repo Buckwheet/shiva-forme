@@ -70,9 +70,11 @@ module Shiva
     end
 
     def main
+      Log.out("DEBUG: Environment entering main method", label: :debug)
       self.before_main if self.respond_to?(:before_main)
       Main.new(self).apply()
       self.after_main if self.respond_to?(:after_main)
+      Log.out("DEBUG: Environment finished main method", label: :debug)
     end
 
     def teardown

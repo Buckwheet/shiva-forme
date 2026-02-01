@@ -1,4 +1,6 @@
 require_relative "./config"
+# require_relative "./util/file_logger"
+Shiva::Config.init!
 
 module Shiva
   def self.root()
@@ -192,15 +194,45 @@ module Shiva
   end
 
   def self.stockpile_gems!
+    Log.out("DEBUG: Checking stockpile... Gems: #{Config.gems.size}, Bots: #{Config.stockpile_bots}", label: :debug)
     return :noop if Config.gems.empty?
     return :noop if Config.stockpile_bots.empty?
-    return unless Script.exists?("give")
+    
     bot = GameObj.pcs.select {|pc| Config.stockpile_bots.include?(pc.name) }.sample
     return :no_bots if bot.nil?
-    Config.gems.each {|gem|
-      Log.out("giving all %s -> %s" % [gem, bot.name], label: %i(gem storage))
-      Script.run("give", "all %s %s" % [gem, bot.name])
-    }
+
+    # 1. Find all potential gems in inventory (containers + held)
+    inventory_items = GameObj.inv.flat_map { |c| c.contents || [] } + [GameObj.right, GameObj.left].compact
+    
+    # 2. Filter for items matching our whitelist
+    gems_to_move = inventory_items.select do |item|
+      Config.gems.any? { |gem_str| item.name =~ /#{Regexp.escape(gem_str)}/i or item.noun =~ /#{Regexp.escape(gem_str)}/i }
+    end.uniq
+
+    return if gems_to_move.empty?
+
+    Log.out("Found #{gems_to_move.size} matching gems to stockpile.", label: :debug)
+
+    # 3. Process the specific items found
+    gems_to_move.each do |item|
+      Log.out("processing #{item.name} -> #{bot.name}", label: %i(gem storage))
+      
+      # Get item by ID
+      res = dothistimeout "get ##{item.id}", 2, /^You remove|^Get what\?|^You already/
+      if res =~ /^Get what\?/
+        Log.out("Failed to get #{item.name} (maybe inside closed container?)", label: :debug)
+        next
+      end
+
+      # Give item by ID
+      give_res = dothistimeout "give ##{bot.id}", 5, /accepted|declined|expired|full/
+      
+      if give_res =~ /declined|expired|full/
+         fput "stow ##{item.id}"
+         Log.out("Bot declined or full. Stopping stockpile.", label: :warn)
+         break
+      end
+    end
   end
 
   def self.preflight!
@@ -251,7 +283,9 @@ module Shiva
       else
         self.bounty!
       end
+      Log.out("DEBUG: Loop iteration done. Checking daemon...", label: :debug)
       self.daemon?
+      Log.out("DEBUG: Daemon check passed. Restarting loop.", label: :debug)
     }
   end
 
@@ -271,6 +305,7 @@ module Shiva
 
   def self.init
     Shiva.load_all_modules
+    Shiva::Armor.init
     Script.run("eboost") if Script.exists?("eboost") && !defined?(::EBoost)
     Script.start("effect-watcher") unless Script.running?("effect-watcher")
     if Opts["simulate"]

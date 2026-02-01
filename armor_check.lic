@@ -1,0 +1,27 @@
+=begin
+  Script to verify Shiva armor detection settings
+=end
+
+# Force reload of core modules to ensure latest code
+shiva_root = File.join(Dir.home, "gemstone", "shiva")
+load File.join(shiva_root, "config.rb")
+load File.join(shiva_root, "util", "armor.rb")
+
+# Re-init config (re-reads TOML)
+Shiva::Config.init!
+
+echo "--- Armor Detection Verification ---"
+echo "Configured Armor: #{Shiva::Config.armor}"
+
+# Force redetection
+detected_type = Shiva::Armor.detect
+
+echo "Detected Armor Type: #{detected_type}"
+echo "Is Scale? (Free Swapping): #{Shiva::Armor.scale?}"
+
+if Shiva::Armor.scale?
+  echo ">>> VERDICT: Stance Swapping ENABLED (Armor allows it)"
+else
+  echo ">>> VERDICT: Stance Swapping DISABLED (Will default to Predator's Eye)"
+end
+echo "------------------------------------"

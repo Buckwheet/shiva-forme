@@ -1,21 +1,31 @@
 module Shiva
   class Condemn < Action
     def priority
-      90
+      70
+    end
+
+    # Explicitly redefine initialize to wipe the old "ghost" version from memory
+    def initialize(mod)
+      super(mod)
     end
 
     def available?(foe)
-      not foe.nil? and
-      not foe.name.include?("Vvrael") and
-      Spell[309].known? and
-      Spell[309].affordable? and
-      Wounds.nsys < 2
+      # Bigshot logic: !mob1 => Only use if mobs <= 1 (Single Target Focus)
+      # Use env.foes (correct API) instead of env.mobs
+      return false if self.env.foes.count > 1
+
+      # Mana check (m5)
+      return false unless Char.mana >= 5
+
+      # Specialize: Condemn (309)
+      return false unless Spell[309].known? and Spell[309].affordable?
+
+      return true
     end
 
     def apply(foe)
-      Stance.guarded
-      fput "target #%s\rincant 309\rstance guard" % foe.id
-      waitcastrt? unless Spell[515].active?
+      fput "incant 309 ##{foe.id}"
+      waitcastrt?
     end
   end
 end
