@@ -1,87 +1,50 @@
 # Shiva (Private Fork)
 
-A comprehensive, modular Lich script for automated hunting in Gemstone IV.
+A comprehensive Lich script for automated hunting in Gemstone IV, designed for high-level play.
 
 ## Overview
 Shiva manages the entire hunting lifecycle:
 - **Bounties**: Automatically fetches and completes taskmaster bounties.
-- **Combat**: Intelligent stance dancing (Armor-aware), attacks, and ambushes.
-- **Support**: Native spell maintenance, healing, and loot management.
-- **Stockpiling**: Efficiently moves gems/skins to locker bots.
-
-> **New to Shiva's Brain?** Check out [SHIVA_CONCEPTS.md](SHIVA_CONCEPTS.md) for a "Dummies Guide" to the Sense-Think-Act loop and how to tweak priorities.
+- **Combat**: Intelligently manages stances, attacks (including UAC/Edged), and ambushes.
+- **Support**: Handles healing, loot management, and resting.
 
 ## Installation
 
-### 1. Clone the Repository
-Clone this repo into a permanent location (e.g., your Development folder).
-
-```bash
-git clone https://github.com/Buckwheet/shiva-forme.git
-```
-
-### 2. Symlink or Copy to Lich
-Lich needs to "see" the script. You have two options:
-
-**Option A: Symbolic Link (Recommended for Developers)**
-Open PowerShell as Administrator:
-```powershell
-# Link the main script
-New-Item -ItemType SymbolicLink -Path "C:\Lich5\scripts\shiva.lic" -Target "C:\Path\To\shiva-forme\shiva.rb"
-
-# Link the Olib dependency (Included in this repo)
-New-Item -ItemType SymbolicLink -Path "C:\Lich5\scripts\Olib" -Target "C:\Path\To\shiva-forme\Olib"
-```
-
-**Option B: Copy (Simple)**
-1.  Copy `shiva.rb` to `C:\Lich5\scripts\shiva.lic`.
-2.  Copy the `shiva` folder to `C:\Lich5\scripts\shiva` (if the script expects local imports).
-    *   *Note*: Shiva's codebase expects to find its modules relative to itself. Ensure the directory structure is preserved.
-3.  Copy the `Olib` folder to `C:\Lich5\scripts\Olib`.
-
-### 3. Dependencies
-This repository includes a copy of **Olib**. Ensure the `Olib` folder is present in your Lich scripts directory.
-Standard Lich scripts required:
-- `eloot` (Looting)
-- `go2` (Travel)
+1.  Place the `shiva` folder in your `Lich/scripts` directory (or wherever your `Lich` loads classes from).
+2.  Ensure you have the following dependencies in your scripts folder:
+    - `eloot.lic` (Looting)
+    - `eherbs.lic` (Healing)
+    - `go2.lic` (Travel)
+    - `reaction.lic` (Environment reaction stub)
 
 ## Configuration
 
-Shiva uses **TOML** files for configuration, located in:
-`shiva/config/<CharacterName>.toml`
+Set the following Lich variables before running:
 
-### Critical Settings (`dirtbag.toml` example)
-
-#### Armor (Stance Logic)
-To prevent stamina drain, Shiva needs to know your specific armor.
-
-```toml
-[combat]
-# EXACT noun or name of your worn armor.
-# If this matches a Scale-group armor (Scale, Brig, Studded, etc), Shiva will enable stance swapping.
-# If it matches Chain/Plate, Shiva will stay in Offensive to save stamina.
-armor = "dull black vultite hauberk"
+```bash
+;vars set lootsack="your loot container"
+;vars set herbsack="your herb container"
+;vars set harness="your weapon/tool container"
+;vars set gemsack="your gem container"
+;vars set skinsack="your skin container"
 ```
 
-#### Weapons
-```toml
-[combat.weapons]
-main = "lance"
-offhand = ""
-shield = ""
+**Optional:**
+```bash
+;vars set skinning_weapon="dagger name"
+;vars set ranged_weapon="bow name"
 ```
 
-#### Stockpile (Gem Mules)
-```toml
-[stockpile]
-bots = ["Makerol"]
-gems = ["diamond", "emerald", "ruby"]
+## Usage
+
+To run Shiva in fully automated daemon mode (continuous looping):
+
+```bash
+;shiva --auto --daemon
 ```
 
-## Setup & Running
-1.  **Start Config**: Run `;shiva` once to generate a default config file if none exists.
-2.  **Edit Config**: Modify `shiva/config/<Name>.toml` with your specific items.
-3.  **Run**:
-    ```bash
-    ;shiva
-    ```
+## Recent Fixes (Jan 2026)
+- **Daemon Mode**: Fixed immediate exit issues.
+- **Logger**: Fixed recursive stack overflow in logging module.
+- **Dependencies**: Patched optional `Spellup` dependency.
+- **Combat**: Added `Katar` support to `Edged` tactics for proper `Kill/Ambush` execution.

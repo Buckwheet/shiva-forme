@@ -11,7 +11,7 @@ module Shiva
     end
 
     def available?
-      Armor.known?("Armored Evasion") and # todo: hard-coded for now
+      Lich::Gemstone::Armor.known?("Armored Evasion") and # todo: hard-coded for now
       not Effects::Debuffs.active?("Strained Muscles") and
       not self.active?
     end

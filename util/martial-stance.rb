@@ -9,7 +9,7 @@ module Shiva
         end
         Log.out("Switching to stance: #{name} (cmd: #{cmd})", label: :debug)
         waitrt?
-        put "cman %s" % cmd
+        fput "cman %s" % cmd
       end
 
       def self.offensive_martial_stance()
