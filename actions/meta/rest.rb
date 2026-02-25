@@ -36,10 +36,13 @@ module Shiva
       return false if Team.has_healer?
       return false if Char.prof.eql?("Empath")
       return false unless Group.empty?
+      return false if percenthealth >= 70
+      return false if !$shiva_restoration_attempted && Society.status.eql?("Order of Voln") && Society.rank > 20
       percenthealth < 70
     end
 
     def reason
+      $shiva_restoration_attempted = false if percenthealth >= 70
       return false if XMLData.room_id.eql? 113001
       return false if %i(escort bandits invasion).include?(self.env.name)
       return :graceful_exit if $shiva_graceful_exit.eql?(true)

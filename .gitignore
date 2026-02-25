@@ -1,0 +1,6 @@
+*.log
+*.bak
+*.arb
+backups/
+logs/
+trash/

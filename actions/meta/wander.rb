@@ -1,9 +1,32 @@
 module Shiva
   class Wander < Action
+    def initialize(*args)
+      super(*args)
+      @visited = []  # track recently visited room IDs
+      @visit_max = 6 # remember last N rooms to avoid ping-ponging
+    end
+
     def paths
       Room.current.wayto.select {|id, wayto|
         self.env.rooms.include?(id) and wayto.is_a?(String)
       }.map(&:last)
+    end
+
+    def path_ids
+      Room.current.wayto.select {|id, wayto|
+        self.env.rooms.include?(id) and wayto.is_a?(String)
+      }
+    end
+
+    def pick_path
+      candidates = self.path_ids
+      # prefer rooms not recently visited
+      unvisited = candidates.reject { |id, _| @visited.include?(id.to_s) }
+      chosen = unvisited.empty? ? candidates.to_a.sample : unvisited.to_a.sample
+      return nil if chosen.nil?
+      @visited << Room.current.id.to_s
+      @visited.shift while @visited.size > @visit_max
+      chosen.last
     end
 
     def call_wayto(wayto)
@@ -100,13 +123,19 @@ module Shiva
       if reason.eql?(:swarm) && @env.action(:divert).available?
         @env.action(:divert).apply
       else
-        self.call_wayto self.paths.sample
+        wayto = self.pick_path
+        if wayto
+          self.call_wayto wayto
+        else
+          self.call_wayto self.paths.sample
+        end
         waitrt?
       end
     end
 
     def pre_move_hook()
       return unless Lich::Claim.mine?
+      @visited.clear  # reset wander memory after combat
       search = @env.action(:loot)
       search.apply unless self.overwhelmed?
       loot = @env.action(:lootarea)

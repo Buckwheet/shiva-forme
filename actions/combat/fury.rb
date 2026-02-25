@@ -1,7 +1,7 @@
 module Shiva
-  class Flurry < Action
+  class Fury < Action
     def priority
-      40
+      41
     end
 
     def cost
@@ -13,24 +13,24 @@ module Shiva
       not Tactic.thrown? and
       not %i(duskruin).include?(self.env.name) and
       not foe.nil? and
-      not Effects::Cooldowns.active?("Flurry") and
-      not (Effects::Buffs.active?("Slashing Strikes") and not Char.prof.eql?("Warrior")) and
+      not Effects::Cooldowns.active?("Fury") and
       not Spell[117].active? and
       not Effects::Debuffs.active?("Jaws") and
-      Tactic.edged? and
-      checkstamina > (self.cost * 3) and
       not hidden? and
+      Tactic.can?(:brawling) and
+      checkstamina > (self.cost * 3) and
       self.env.foes.size < 4
     end
 
-    def flurry(foe)
+    def fury(foe)
       Timer.await() if checkrt > 5
       Stance.offensive
-      fput "weapon flurry #%s" % foe.id
+      fput "weapon fury #%s" % foe.id
       ttl = Time.now + 5
       while line=get
         break if line.include?("...wait")
-        break if line.include?("The mesmerizing sway of body and blade glides to its inevitable end")
+        break if line.include?("recentering yourself for the fight")
+        break if line.include?("lose the rhythm of your assault")
         break unless GameObj[foe.id]
         break if foe.dead? or foe.gone?
         break if Time.now > ttl
@@ -38,7 +38,7 @@ module Shiva
     end
 
     def apply(foe)
-      return self.flurry foe
+      return self.fury foe
     end
   end
 end

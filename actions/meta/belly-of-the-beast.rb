@@ -16,44 +16,41 @@ module Shiva
     end
 
     def find_dagger
-      # Search Configured Skinning Weapon first (Likely a dagger)
-      if defined?(Config) and Config.respond_to?(:skinning_weapon) and Config.skinning_weapon
-         candidates = [Containers.harness, Containers.lootsack].compact
-         found = candidates.map {|c| c.find { |i| i.name.eql?(Config.skinning_weapon) } }.compact.first
-         if found
-           found.take
-           return found
-         end
-      end
-
-      # Search Priority 1: Daggers (User requested/believed requirement)
-      if (dagger = [Containers.harness, Containers.lootsack].compact.map {|c| c.find {|i| Tactic::Nouns::Dagger.include?(i.noun) } }.compact.first)
-        dagger.take
+      # Search worn items and inside all containers
+      all_items = GameObj.inv + GameObj.inv.flat_map { |c| c.contents || [] }
+      
+      if (dagger = all_items.find {|i| Tactic::Nouns::Dagger.include?(i.noun) })
+        dagger.take if dagger.respond_to?(:take)
         return dagger
       end
       
-      # Search Priority 2: Any Edged (Desperation fallback - better to try than die)
-      if (edged = [Containers.harness, Containers.lootsack].compact.map {|c| c.find {|i| Tactic::Nouns::Edged.include?(i.noun) } }.compact.first)
-        edged.take
+      # Fallback: any edged weapon
+      if (edged = all_items.find {|i| Tactic::Nouns::Edged.include?(i.noun) })
+        edged.take if edged.respond_to?(:take)
         return edged
       end
 
-      Echo.out "PANIC: No cutting weapon found for Belly of the Beast! Looked for Daggers then Edged.", label: :shiva
+      Echo.out "PANIC: No cutting weapon found for Belly of the Beast!", label: :shiva
       return nil
     end
 
     def apply
-      Char.unarm
       waitrt?
+      left, right = [Char.left, Char.right]
+      if Config.briar_weapon && right
+        dothistimeout "tap ##{right.id}", 5, /gently tap/
+        waitrt?
+        sleep 0.5
+      end
+      Containers.harness.add(left, right)
       dagger = self.find_dagger
       while XMLData.room_id.eql?(113001)
-        # Attack with whatever we found (Dagger or Fallback)
         fput "attack wall" if Char.right
         sleep 0.1
         waitrt?
       end
-      Containers.harness.add(dagger) if dagger
-      Char.arm
+      fput "_drag #%s right" % right.id unless right.nil?
+      fput "_drag #%s left" % left.id unless left.nil?
     end
   end
 end

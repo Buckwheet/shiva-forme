@@ -14,6 +14,7 @@ module Shiva
     end
 
     def apply()
+      waitrt?
       ttl = Time.now + 2
       fput "symbol of courage"
       wait_until {Effects::Buffs.active?("Symbol of Courage") or Time.now > ttl}

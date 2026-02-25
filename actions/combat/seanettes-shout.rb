@@ -1,7 +1,7 @@
 module Shiva
   class SeanettesShout < Action
     def priority
-      10
+      Priority.get(:high)
     end
 
     def active?
@@ -9,7 +9,7 @@ module Shiva
     end
 
     def available?
-      Char.name.eql?("Etanamir") and # hard-coded for now
+      Char.prof.eql?("Warrior") and
       not Effects::Debuffs.active?("Strained Muscles") and
       not cutthroat? and
       Char.stamina > 30 and

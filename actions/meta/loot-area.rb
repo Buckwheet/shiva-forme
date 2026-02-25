@@ -6,6 +6,7 @@ module Shiva
     def initialize(*args)
       super(*args)
       @seen = []
+      @last_loot_time = Time.at(0)
     end
 
     def priority
@@ -40,7 +41,8 @@ module Shiva
 
     def available?
       Lich::Claim.mine? and
-      (self.unseen.size > 0 or self.dead.size > 0)and
+      (Time.now - @last_loot_time) > 2 and
+      (self.unseen.size > 0 or self.dead.size > 0) and
       (Group.leader? or Group.empty?) and
       self.safe?
     end
@@ -55,6 +57,7 @@ module Shiva
       return unless Lich::Claim.mine?
       this_loot = self.nonce self.loot
       return if this_loot.empty? and self.dead.empty?
+      @last_loot_time = Time.now
       Script.run("eloot")
     end
   end

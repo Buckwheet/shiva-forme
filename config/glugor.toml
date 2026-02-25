@@ -1,0 +1,42 @@
+# Shiva Configuration for Glugor
+# Generated: 2026-02-14 15:15:27
+
+[general]
+town = "icemule trace"
+bases = [2300]
+lootsack = "weathered cloud grey greatcloak"
+herbsack = "weathered cloud grey greatcloak"
+harness = "weathered cloud grey greatcloak"
+gemsack = "weathered cloud grey greatcloak"
+skinsack = "weathered cloud grey greatcloak"
+scripts = []
+
+[combat]
+armor = "kroderine full plate"
+flee = []
+briar_weapon = false
+brawling_weapon = "zorchar knuckle-blade"
+
+[weapons]
+main = "zorchar knuckle-blade"
+shield = "kroderine greatshield"
+ranged = "none"
+skinning = "knife"
+
+[stockpile]
+bots = []
+gems = ["diamond", "ruby", "emerald", "sapphire"]
+
+[environs]
+drop = []
+
+[support]
+healers = []
+pickers = []
+
+[bounty]
+boost = true
+drop_types = []
+
+[escort]
+allowed = []

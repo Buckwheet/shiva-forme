@@ -40,8 +40,24 @@ module Shiva
       Rally.group(Base.closest) if Group.leader? and not Group.empty?
       self.turn_in_bounty(town) if %i(report_to_guard skin heirloom_found).include? Bounty.type
       Base.go2
-      Conditions::Injured.handle!
-      wait_while("cleanup:waiting on healing") {Char.total_wound_severity > 1}
+      
+      # Calculate actual wound total
+      total_wounds = XMLData.injuries.values.sum { |data| data["wound"] || 0 }
+      
+      # Skip healing if only briar wound
+      unless Config.briar_weapon && total_wounds == 1 && percenthealth > 95
+        Conditions::Injured.handle!
+      end
+      
+      # Ignore minor briar wounds (total wounds 1 with high health)
+      wait_while("cleanup:waiting on healing") do
+        total_wounds = XMLData.injuries.values.sum { |data| data["wound"] || 0 }
+        if Config.briar_weapon && total_wounds == 1 && percenthealth > 95
+          false
+        else
+          total_wounds > 1
+        end
+      end
       Char.unarm
       
       wait_while("waiting on hands") {Char.left or Char.right} unless Char.left.type =~ /box/

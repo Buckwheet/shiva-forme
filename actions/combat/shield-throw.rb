@@ -22,6 +22,7 @@ module Shiva
     def shield_throw(foe)
       Timer.await() if checkrt > 5
       Stance.offensive
+      fput "symbol of sleep" if Spell["Symbol of Sleep"].known?
       fput "shield throw"
     end
 

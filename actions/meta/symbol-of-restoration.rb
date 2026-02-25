@@ -12,7 +12,9 @@ module Shiva
     end
 
     def apply()
+      waitrt?
       fput "symbol of restoration"
+      $shiva_restoration_attempted = true
     end
   end
 end

@@ -27,10 +27,10 @@ module Shiva
         Log.out("Scanning inventory for any armor...", label: :setup) if armor_name
         
         # Blacklist common accessories that are tagged as armor but aren't the main suit
-        blacklist = %w(aventail helm greaves bracer armguards leg-guards shield buckler targe)
+        blacklist_patterns = /shield|buckler|targe|aventail|helm|greaves|bracer|armguards|leg-guards/i
         
         armor = GameObj.inv.find {|item| 
-          item.type =~ /armor/i && !blacklist.include?(item.noun.downcase)
+          item.type =~ /armor/i && item.noun !~ blacklist_patterns
         } 
       end
       

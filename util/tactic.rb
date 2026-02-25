@@ -28,6 +28,7 @@ module Tactic
   end
 
   def self.brawling?
+    return true if Shiva::Config.brawling_weapon && self.can?(:brawling) && Char.right.name.eql?(Shiva::Config.brawling_weapon)
     Char.left.nil? && Char.right.nil? && self.can?(:brawling)
   end
 

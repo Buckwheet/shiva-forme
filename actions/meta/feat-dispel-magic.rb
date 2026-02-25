@@ -1,6 +1,14 @@
 # Dispel Magic
 module Shiva
   class FeatDispel < Action
+    Dispellable = %w(
+      Web Calm Interference Bind Frenzy Condemn
+      Weapon\ Deflection Elemental\ Saturation Slow Cold\ Snap Stone\ Fist Immolation
+      Wild\ Entropy Sounds Holding\ Song Song\ of\ Depression Song\ of\ Rage
+      Vertigo Confusion Thought\ Lash Mindwipe
+      Pious\ Trial Aura\ of\ the\ Arkati
+    )
+    
     def priority
       -100
     end
@@ -9,12 +17,8 @@ module Shiva
       @cooldown ||= Time.now
     end
 
-    def debuffs
-      Effects::Debuffs.to_h.keys.select {|k| k.is_a?(String)}.reject {|k| k =~ /Wall of Thorns|Vulnerable|Confused|Crippled/i}
-    end
-
     def debuffed?
-      not self.debuffs.empty?
+      Dispellable.any? { |debuff| Effects::Debuffs.active?(debuff) }
     end
 
     def available?
@@ -26,10 +30,9 @@ module Shiva
     end
 
     def apply()
-      waitrt?
+      waitcastrt?
       if self.debuffed?
         @cooldown = Time.now + 20
-        Log.out(self.debuffs)
         fput "feat dispel"
       end
     end

@@ -2,7 +2,15 @@ module Shiva
   module Conditions
     module Injured
       def self.injured?
-        Char.total_wound_severity > 0 or percenthealth < 100
+        # Calculate actual wound total
+        total_wounds = XMLData.injuries.values.sum { |data| data["wound"] || 0 }
+        
+        # Ignore minor briar weapon wounds (total wounds 1 only)
+        if Config.briar_weapon && total_wounds == 1 && percenthealth > 95
+          return false
+        end
+        
+        total_wounds > 0 or percenthealth < 100
       end
 
       def self.use_healer
@@ -22,6 +30,15 @@ module Shiva
       end
 
       def self.use_herbs
+        # Tap briar weapon before eherbs to avoid damage
+        if Config.briar_weapon
+          weapon = GameObj.right_hand
+          if weapon
+            fput "tap ##{weapon.id}"
+            waitrt?
+          end
+        end
+        
         tries = 0
         begin
           tries = tries + 1

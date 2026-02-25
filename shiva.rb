@@ -306,6 +306,7 @@ module Shiva
   def self.init
     Shiva.load_all_modules
     Shiva::Armor.init
+    Shiva::BriarWeapon.install_hooks if defined?(Shiva::BriarWeapon)
     Script.run("eboost") if Script.exists?("eboost") && !defined?(::EBoost)
     Script.start("effect-watcher") unless Script.running?("effect-watcher")
     if Opts["simulate"]

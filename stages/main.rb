@@ -8,6 +8,15 @@ module Shiva
 
     def make_decision
       Log.out("DEBUG: Calling env.best_action", label: :debug)
+      # Break stun immediately if berserk is available
+      if stunned? and CMan.berserk > 5 and Char.stamina > 35 and Group.empty?
+        Log.out("DEBUG: Stunned! Attempting berserk break", label: :debug)
+        waitrt?
+        fput "berserk"
+        wait_while { stunned? }
+        fput "stop berserk" if Spell["Berserk"].active?
+        return :berserk
+      end
       (proposed_action, foe) = self.env.best_action
       Log.out("DEBUG: best_action returned: #{proposed_action}", label: :debug)
       

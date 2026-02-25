@@ -1,5 +1,10 @@
 module Shiva
   class Kill < Action
+    def initialize(*args)
+      super(*args)
+      @aim_misses = {}  # track consecutive aimed misses per foe id
+    end
+
     def priority
       101
     end
@@ -12,7 +17,12 @@ module Shiva
     end
 
     def get_best_area(foe)
-      proposed_area = foe.kill_shot Aiming.lookup(foe)
+      # fall back to unaimed after 2 consecutive misses on same target
+      if (@aim_misses[foe.id] || 0) >= 2
+        @area = "clear"
+        return @area
+      end
+      proposed_area = foe.kill_shot Aiming.lookup(foe) rescue "clear"
       Log.out("{foe=%s, aim=%s}" % [foe.name, @area])
       @area = proposed_area
       return @area
@@ -27,7 +37,12 @@ module Shiva
         area = "clear" if %w(chest back).include?(area.to_s)
         put "attack #%s %s" % [foe.id, area]
       end
-      Timer.await()
+      result = Timer.await()
+      if result =~ /fail to find an opening/i
+        @aim_misses[foe.id] = (@aim_misses[foe.id] || 0) + 1
+      else
+        @aim_misses.delete(foe.id)
+      end
     end
 
     def apply(foe)

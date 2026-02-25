@@ -211,6 +211,18 @@ module Shiva
     def self.armor
       self.get("combat.armor")
     end
+    
+    def self.briar_weapon
+      self.get("combat.briar_weapon")
+    end
+
+    def self.brawling_weapon
+      self.get("combat.brawling_weapon")
+    end
+
+    def self.brawl_tier3
+      self.get("combat.brawl_tier3") || "kick"
+    end
 
     def self.chain_spear
       self.get("combat.weapons.chain_spear") || nil

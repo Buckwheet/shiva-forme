@@ -1,6 +1,6 @@
 module Shiva
   class Smite < Action
-    Uncrittable = %w(crusader conjurer)
+    Uncrittable = %w(conjurer)
     Smited = []
 
     def self.smited?(foe)
@@ -16,29 +16,33 @@ module Shiva
       not Effects::Debuffs.active?("Jaws") and
       not Smited.include?(foe.id) and
       not Uncrittable.include?(foe.noun) and
-      hidden? and
-      foe.tags.include?(:noncorporeal)
+      (Char.prof =~ /Rogue/ ? hidden? : true) and
+      foe.type.include?("noncorporeal")
     end
 
     Ok = Regexp.union(
-      %r{is held in the corporeal plane!},
-      %r[is unwillingly drawn into the corporeal plane]
+      /is held in the corporeal plane!/,
+      /is unwillingly drawn into the corporeal plane/,
     )
 
-    def smite(foe)
-      Stance.offensive
-      result = dothistimeout "smite #%s" % foe.id, 1, Regexp.union(
-        Ok,
-        %r[wait]
-      )
-
-      Smited << foe.id if result =~ Ok
-      sleep 0.5
-      Timer.await() if checkrt > 6
-    end
-
     def apply(foe)
-      return self.smite foe
+      waitrt?
+      Stance.offensive
+      put "smite #%s" % foe.id
+      ttl = Time.now + 4
+      while (line = get)
+        if line =~ Ok
+          Smited << foe.id
+          break
+        elsif line =~ /[wW]ait (\d+) sec/
+          sleep $1.to_i
+          put "smite #%s" % foe.id
+        end
+        break if line =~ /Roundtime:/
+        break if foe.dead? or foe.gone?
+        break if line =~ /What were you referring to|is already dead/
+        break if Time.now > ttl
+      end
     end
   end
 end

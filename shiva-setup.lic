@@ -1,0 +1,280 @@
+=begin
+  Shiva Setup GUI
+  
+  GTK-based configuration GUI for Shiva hunting automation.
+  Reads/writes character-specific TOML config files.
+  
+  Usage: ;shiva-setup
+=end
+
+require 'fileutils'
+require 'toml-rb'
+
+module ShivaSetup
+  SHIVA_ROOT = File.join(Dir.home, "gemstone", "shiva")
+  CONFIG_DIR = defined?(DATA_DIR) ? File.join(DATA_DIR, "shiva", "config") : File.join(SHIVA_ROOT, "config")
+
+  def self.config_path
+    File.join(CONFIG_DIR, "#{Char.name.downcase}.toml")
+  end
+
+  def self.load_config
+    FileUtils.mkdir_p(CONFIG_DIR)
+    return default_config unless File.exist?(config_path)
+    begin
+      default_config.merge(TomlRB.load_file(config_path, symbolize_keys: false))
+    rescue => e
+      respond "Error loading config: #{e.message}"
+      default_config
+    end
+  end
+
+  def self.default_config
+    {
+      "general" => {
+        "town" => "",
+        "lootsack" => "backpack",
+        "herbsack" => "cloak",
+        "harness" => "weapon harness",
+        "gemsack" => "gem pouch",
+        "skinsack" => "skin sack",
+      },
+      "weapons" => {
+        "main" => "",
+        "ranged" => "none",
+        "skinning" => "knife",
+      },
+      "combat" => {
+        "armor" => "",
+        "brawling_weapon" => "",
+        "brawl_tier3" => "kick",
+        "briar_weapon" => false,
+      },
+      "stockpile" => {
+        "bots" => [],
+        "gems" => [],
+      },
+      "bounty" => {
+        "boost" => true,
+        "drop_types" => [],
+      },
+      "environs" => {
+        "drop" => [],
+      },
+      "escort" => {
+        "allowed" => [],
+      },
+    }
+  end
+
+  def self.save_config(config)
+    FileUtils.mkdir_p(CONFIG_DIR)
+    # Deep merge with existing config to preserve fields the GUI doesn't manage
+    existing = File.exist?(config_path) ? TomlRB.load_file(config_path, symbolize_keys: false) : {}
+    config.each do |section, values|
+      next unless values.is_a?(Hash)
+      existing[section] ||= {}
+      values.each { |k, v| existing[section][k] = v }
+    end
+    # Clean up empty brawling_weapon
+    bw = existing.dig("combat", "brawling_weapon")
+    existing["combat"].delete("brawling_weapon") if bw.is_a?(String) && bw.strip.empty?
+    File.write(config_path, TomlRB.dump(existing))
+    respond "Shiva config saved: #{config_path}"
+  end
+
+  def self.detect_weapon
+    Char.right ? Char.right.name : ""
+  end
+
+  def self.detect_town
+    town_id = Room.current.find_nearest_by_tag("town") rescue nil
+    return "" if town_id.nil?
+    Room[town_id].location rescue ""
+  end
+
+  if defined?(Gtk) && Gtk::Version::MAJOR == 3
+    class SetupWindow
+      def initialize
+        @config = ShivaSetup.load_config
+        @running = true
+        build_ui
+      end
+
+      def build_ui
+        Gtk.queue do
+          @window = Gtk::Window.new(:toplevel)
+          @window.set_title "Shiva Setup — #{Char.name}"
+          @window.set_default_size(500, 520)
+          @window.keep_above = true
+          @window.signal_connect("destroy") { @running = false }
+
+          notebook = Gtk::Notebook.new
+
+          notebook.append_page(build_general_tab, Gtk::Label.new("General"))
+          notebook.append_page(build_weapons_tab, Gtk::Label.new("Weapons"))
+          notebook.append_page(build_combat_tab, Gtk::Label.new("Combat"))
+          notebook.append_page(build_loot_tab, Gtk::Label.new("Loot"))
+
+          vbox = Gtk::Box.new(:vertical, 5)
+          vbox.pack_start(notebook, expand: true, fill: true, padding: 5)
+
+          # Save / Close buttons
+          button_box = Gtk::Box.new(:horizontal, 5)
+          save_btn = Gtk::Button.new(label: "Save")
+          close_btn = Gtk::Button.new(label: "Close")
+          save_btn.signal_connect("clicked") { on_save }
+          close_btn.signal_connect("clicked") { @window.destroy }
+          button_box.pack_end(close_btn, expand: false, fill: false, padding: 5)
+          button_box.pack_end(save_btn, expand: false, fill: false, padding: 5)
+          vbox.pack_start(button_box, expand: false, fill: false, padding: 5)
+
+          @window.add(vbox)
+          @window.show_all
+        end
+      end
+
+      def make_entry(grid, row, label_text, section, key)
+        label = Gtk::Label.new(label_text)
+        label.halign = :end
+        entry = Gtk::Entry.new
+        entry.text = (@config.dig(section, key) || "").to_s
+        entry.hexpand = true
+        entry.signal_connect("changed") { |w| set_config(section, key, w.text) }
+        grid.attach(label, 0, row, 1, 1)
+        grid.attach(entry, 1, row, 1, 1)
+        entry
+      end
+
+      def make_check(grid, row, label_text, section, key)
+        check = Gtk::CheckButton.new(label_text)
+        check.active = !!@config.dig(section, key)
+        check.signal_connect("toggled") { |w| set_config(section, key, w.active?) }
+        grid.attach(check, 0, row, 2, 1)
+        check
+      end
+
+      def make_combo(grid, row, label_text, section, key, options)
+        label = Gtk::Label.new(label_text)
+        label.halign = :end
+        grid.attach(label, 0, row, 1, 1)
+        combo = Gtk::ComboBoxText.new
+        options.each { |o| combo.append_text(o) }
+        current = @config.dig(section, key) || options.first
+        combo.active = [options.index(current) || 0, 0].max
+        combo.signal_connect("changed") { |w| set_config(section, key, w.active_text) }
+        grid.attach(combo, 1, row, 1, 1)
+        combo
+      end
+
+      def set_config(section, key, value)
+        @config[section] ||= {}
+        @config[section][key] = value
+      end
+
+      def build_general_tab
+        grid = Gtk::Grid.new
+        grid.column_spacing = 10
+        grid.row_spacing = 5
+        grid.border_width = 10
+
+        make_entry(grid, 0, "Town:", "general", "town")
+        make_entry(grid, 1, "Loot Sack:", "general", "lootsack")
+        make_entry(grid, 2, "Herb Sack:", "general", "herbsack")
+        make_entry(grid, 3, "Harness:", "general", "harness")
+        make_entry(grid, 4, "Gem Sack:", "general", "gemsack")
+        make_entry(grid, 5, "Skin Sack:", "general", "skinsack")
+
+        grid
+      end
+
+      def build_weapons_tab
+        grid = Gtk::Grid.new
+        grid.column_spacing = 10
+        grid.row_spacing = 5
+        grid.border_width = 10
+
+        @main_entry = make_entry(grid, 0, "Main Weapon:", "weapons", "main")
+        make_entry(grid, 1, "Ranged Weapon:", "weapons", "ranged")
+        make_entry(grid, 2, "Skinning Weapon:", "weapons", "skinning")
+
+        # Detect button
+        detect_btn = Gtk::Button.new(label: "Detect Equipped")
+        detect_btn.signal_connect("clicked") do
+          Gtk.queue do
+            weapon = ShivaSetup.detect_weapon
+            @main_entry.text = weapon unless weapon.empty?
+          end
+        end
+        grid.attach(detect_btn, 1, 3, 1, 1)
+
+        grid
+      end
+
+      def build_combat_tab
+        grid = Gtk::Grid.new
+        grid.column_spacing = 10
+        grid.row_spacing = 5
+        grid.border_width = 10
+
+        make_entry(grid, 0, "Armor:", "combat", "armor")
+
+        # Brawling weapon
+        @brawl_entry = make_entry(grid, 1, "Brawling Weapon:", "combat", "brawling_weapon")
+        brawl_hint = Gtk::Label.new("(knuckle-blade, cestus, etc. Leave blank if not brawling)")
+        brawl_hint.halign = :start
+        brawl_hint.style_context.add_class("dim-label") rescue nil
+        grid.attach(brawl_hint, 1, 2, 1, 1)
+
+        # Brawl tier3 attack
+        make_combo(grid, 3, "Brawl Tier3 Attack:", "combat", "brawl_tier3", ["kick", "punch", "grapple", "jab"])
+
+        # Briar weapon checkbox
+        make_check(grid, 4, "Briar Weapon (auto-activate blood, tap before stow)", "combat", "briar_weapon")
+
+        # Copy from main weapon button
+        copy_btn = Gtk::Button.new(label: "Copy Main Weapon Name")
+        copy_btn.signal_connect("clicked") do
+          Gtk.queue do
+            main = @config.dig("weapons", "main") || ""
+            @brawl_entry.text = main unless main.empty?
+          end
+        end
+        grid.attach(copy_btn, 1, 5, 1, 1)
+
+        grid
+      end
+
+      def build_loot_tab
+        grid = Gtk::Grid.new
+        grid.column_spacing = 10
+        grid.row_spacing = 5
+        grid.border_width = 10
+
+        make_check(grid, 0, "Use Bounty Boost", "bounty", "boost")
+
+        grid
+      end
+
+      def on_save
+        ShivaSetup.save_config(@config)
+      end
+
+      def start
+        Gtk.queue { @window.show_all }
+        wait_while { @running }
+      end
+    end
+  end
+
+  def self.run
+    if defined?(Gtk) && Gtk::Version::MAJOR == 3
+      window = SetupWindow.new
+      window.start
+    else
+      respond "GTK not available. Edit config manually: #{config_path}"
+    end
+  end
+end
+
+ShivaSetup.run

@@ -9,13 +9,15 @@ module Shiva
     def available?
       not Effects::Buffs.active?("Absorb Magic") and
       not Effects::Cooldowns.active?("Absorb Magic") and
+      not Effects::Debuffs.active?("Sympathy") and
       Feat.absorb_magic > 0 and
-      not stunned? and
-      muckled?
+      not checkstunned and
+      not self.env.foes.empty?
     end
 
     def apply()
-      fput "feat absorb"
+      waitcastrt?
+      dothistimeout "feat absorb", 2, /ravenous void|stubbornly out of reach|wait/
     end
   end
 end
